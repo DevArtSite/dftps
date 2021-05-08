@@ -1,0 +1,36 @@
+#ftp server default config file
+[addr]
+  port = 2121
+# hostname = "127.0.0.1"
+
+[options]
+  # Url for passive connection.
+  pasvUrl = "127.0.0.1"
+  # Minimum port for passive connection.
+  pasvMin = 1024
+  # Maximum port for passive connection.
+  pasvMax = 65535
+  # Handle anonymous connexion. true || false
+# anonymous = false
+  # Sets the format to use for file stat queries such as "LIST".
+# fileFormat?: string;
+  # Array of commands that are not allowed
+# blacklist?: string[];
+
+[database]
+  # Select your connector type ("MariaDB" | "MongoDB" | "MySQL" | "PostgreSQL" | "SQLite")
+  #connector = "MariaDB"
+
+  # MariaDB, MySQL, PostgreSQL Example
+  #database = "database-name"
+  #host = "host"
+  #username = "username"
+  #password = "password"
+  #port = port                  # optional
+
+  # MongoDB Example
+  #uri = "mongodb-url"          # "mongodb://127.0.0.1:27017"
+  #database = "database-name
+
+  # SQLite Example
+  #filepath = "sqlite file path"
