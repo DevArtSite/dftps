@@ -31,10 +31,13 @@ fi
 
 bin_dir="/usr/bin"
 exe="dftps"
+config="default.config.toml"
 
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
 unzip -d "$bin_dir" -o "$exe.zip"
 chmod +x "$bin_dir/dftps"
+cp "$config" "/etc"
+mv "/etc/$config" "/etc/$exe.toml"
 rm "$exe.zip"
 
 echo "DftpS was installed successfully"
