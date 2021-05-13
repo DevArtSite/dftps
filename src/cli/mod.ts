@@ -35,11 +35,10 @@ await createDb((config.database as Configs));
 
 const cmd = await new Command()
   .name("DFtpS")
-  .version("0.1.0")
+  .version("1.0.1")
   .description("DFtpS configuration command line interface.")
   .command("user", usersCommands)
   .command("serve", serveCommands);
-
 
 cmd.parse(Deno.args);
 

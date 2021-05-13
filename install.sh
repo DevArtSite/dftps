@@ -13,6 +13,9 @@ if [ "$OS" = "Windows_NT" ]; then
 else
 	case $(uname -sm) in
 	"Darwin x86_64")
+  	echo "Error: DFtpS Not Compatible with windows." 1>&2
+	  exit 1
+  ;;
 	"Darwin arm64")
   	echo "Error: DFtpS Not Compatible with windows." 1>&2
 	  exit 1
@@ -21,18 +24,19 @@ else
 fi
 
 if [ $# -eq 0 ]; then
-	uri="https://github.com/DevArtSite/DFtpS/releases/latest/download/DFtpS.zip"
+	uri="https://github.com/DevArtSite/DFtpS/releases/latest/download/dftps.zip"
 else
-	uri="https://github.com/DevArtSite/DFtpS/releases/download/${1}/DFtpS.zip"
+	uri="https://github.com/DevArtSite/DFtpS/releases/download/${1}/dftps.zip"
 fi
 
 bin_dir="/usr/bin"
-exe="$bin_dir/dftps"
+exe="dftps"
 
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
 unzip -d "$bin_dir" -o "$exe.zip"
-chmod +x "$exe"
+mv "$bin_dir/serve" "$bin_dir/dftps"
+chmod +x "$bin_dir/dftps"
 rm "$exe.zip"
 
 echo "DftpS was installed successfully"
-echo "Run 'DftpS --help' to get started"
+echo "Run 'dftps --help' to get started"
