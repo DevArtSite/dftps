@@ -35,10 +35,13 @@ config="default.config.toml"
 
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
 unzip -d "$bin_dir" -o "$exe.zip"
-chmod +x "$bin_dir/dftps"
-cp "$config" "/etc"
-mv "/etc/$config" "/etc/$exe.toml"
 rm "$exe.zip"
 
+chmod +x "$bin_dir/dftps"
+
+cp "$bin_dir/$config" "/etc"
+mv "/etc/$config" "/etc/$exe.toml"
+
 echo "DftpS was installed successfully"
+echo "You must be modify you'r config file in '/etc/$exe.toml'"
 echo "Run 'dftps --help' to get started"

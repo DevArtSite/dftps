@@ -1,6 +1,6 @@
 #ftp server default config file
 [addr]
-  port = 2121
+  port = 21
 # hostname = "127.0.0.1"
 
 [options]
