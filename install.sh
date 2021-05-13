@@ -34,7 +34,6 @@ exe="dftps"
 
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
 unzip -d "$bin_dir" -o "$exe.zip"
-mv "$bin_dir/serve" "$bin_dir/dftps"
 chmod +x "$bin_dir/dftps"
 rm "$exe.zip"
 
