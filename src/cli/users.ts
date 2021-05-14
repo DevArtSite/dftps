@@ -7,6 +7,8 @@ import {
 } from "../../deps.ts";
 import type { Deferred } from "../../deps.ts";
 
+import { upgradable } from "./mod.ts";
+
 import Users from "../db/Users.ts";
 
 export const deferUsers: Deferred<string|null|void> = deferred();
@@ -35,6 +37,7 @@ const userCmdAdd = new Command()
   .option("--uid [val:number]", "User id of ftp account", { required: true })
   .option("--gid [val:number]", "Group id of ftp account", { required: true })
   .action(async ({ username, password, root, uid, gid }: iUser) => {
+    await upgradable();
     if (!username) return userCmdAdd.showHelp();
     if (!password) return userCmdAdd.showHelp();
     if (!root) return userCmdAdd.showHelp();
@@ -54,6 +57,7 @@ const userCmdAdd = new Command()
 const userCmdDel = new Command()
   .description("Remove an ftp user.")
   .action(async ({ username }) => {
+    await upgradable();
     if (!username) return userCmdAdd.showHelp();
     if (await Users.where('username', username).count() === 0) return deferUsers.reject(`User "${username}" not found!\n Use -h`);
     await Users.where('username', username).delete();
@@ -64,6 +68,7 @@ const userCmdDel = new Command()
 const userCmdGet = new Command()
   .description("Show informations of an ftp user.")
   .action(async ({ username }) => {
+    await upgradable();
     const users = await Users.where('username', username).all();
     if (users.length === 0) return deferUsers.reject(`User "${username}" not found!`);
     let { root, uid, gid } = users[0];
@@ -80,6 +85,7 @@ export const usersCommands = new Command()
   .option("-u, --username [val:string]", "Username of ftp account.", { global: true, required: true })
   .description("User section.")
   .action(async () => {
+    await upgradable();
     const users = await Users.select("username", "root", "uid", "gid").all();
     if (users.length === 0) return deferUsers.reject(`Users list empty, use add command to add an user.`)
     table

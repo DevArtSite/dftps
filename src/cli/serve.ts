@@ -9,6 +9,8 @@ import type { UsernameResolvable, LoginResolvable } from "../server/connection.t
 import Users from "../db/Users.ts";
 import tomlJson from "../_utils/toml.ts";
 
+import { upgradable } from "./mod.ts";
+
 const configFile = "/etc/dftps.toml";
 const config = tomlJson({ fileUrl: configFile });
 
@@ -16,6 +18,7 @@ const serveCommands = new Command()
   //.option("-u, --username [val:string]", "Username of ftp account.", { global: true, required: true })
   .description("Run your Ftp serveur.")
   .action(async () => {
+    await upgradable();
     const serve = new Server(config.addr, config.options);
     for await (const connection of serve) {
       const { awaitUsername, awaitLogin } = connection;
