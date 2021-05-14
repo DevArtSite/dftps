@@ -31,16 +31,18 @@ fi
 
 bin_dir="/usr/bin"
 exe="dftps"
-config="default.config.toml"
+archive="$exe.zip"
+config="$exe.toml"
 
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
-unzip -d "$bin_dir" -o "$exe.zip"
+unzip -o -j "$archive" "$exe" -d "$bin_dir"
+
+if [ ! -f "/etc/$exe.toml" ]; 
+  unzip -o -j "$archive" "$config" -d "/etc"
+fi
+
+chmod +x "$bin_dir/$exe"
 rm "$exe.zip"
-
-chmod +x "$bin_dir/dftps"
-
-cp "$bin_dir/$config" "/etc"
-mv "/etc/$config" "/etc/$exe.toml"
 
 echo "DftpS was installed successfully"
 echo "You must be modify you'r config file in '/etc/$exe.toml'"
