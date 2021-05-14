@@ -196,6 +196,7 @@ export default class Connection {
   async commands(): Promise<void> {
     for await (const buffer of Deno.iter(this.conn)) {
       try {
+
         /** Read data from connection */
         const line = new TextDecoder().decode(buffer);
         if (!line) return;

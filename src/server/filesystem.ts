@@ -100,7 +100,7 @@ export default class FileSystem {
         const filePath = DPath.join(fsPath, fileName);
         const access = this.access(filePath);
         const stat = await Deno.stat(filePath);
-        if ((this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid)) {
+        if (access/*(this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid)*/) {
           files.push(Object.assign(stat, { name: fileName }));
         }
     }
@@ -123,8 +123,10 @@ export default class FileSystem {
 
   async write(fileName: string, data: Uint8Array, { append = false } = {}): Promise<void> {
     const { fsPath } = this._resolvePath(fileName);
-    const access = this.access(fsPath);
-    if (!access) throw new Error("You don't have permissions!");
+    if (await exists(fsPath)) {
+      const access = this.access(fsPath);
+      if (!access) throw new Error("You don't have permissions!");
+    }
     let chown = false;
     if (!await exists(fsPath)) chown = true;
     await Deno.writeFile(fsPath, data, { append });
