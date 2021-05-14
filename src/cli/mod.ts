@@ -12,7 +12,7 @@ import { usersCommands, deferUsers } from "./users.ts";
 import serveCommands from "./serve.ts";
 import { upgradeCommands, latest } from "./upgrade.ts";
 
-export const version = "1.1.1";
+export const version = "1.2.2";
 const logger = new Logger({ prefix: `[DFtpS] => ` });
 const defaultConfigFile = "./default.config.toml";
 const configFile = "/etc/dftps.toml";
