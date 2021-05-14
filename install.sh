@@ -37,7 +37,7 @@ config="$exe.toml"
 curl --fail --location --progress-bar --output "$exe.zip" "$uri"
 unzip -o -j "$archive" "$exe" -d "$bin_dir"
 
-if [ ! -f "/etc/$exe.toml" ]; 
+if [ ! -f "/etc/$exe.toml" ]; then
   unzip -o -j "$archive" "$config" -d "/etc"
 fi
 
