@@ -67,6 +67,8 @@ export default class Connection {
   gid?: number;
   authenticated = false;
   
+  software?: string;
+
   fs?: FileSystem;
   transferType = "binary";
   encoding = 'utf8';
@@ -204,7 +206,6 @@ export default class Connection {
         /** Read data from connection */
         const buffer = buf.slice(0, n);
         const line = new TextDecoder().decode(buffer);
-        console.log(line)
         if (!line) return;
         this.logger.debug(line, line.length);
         /** Parse data */
