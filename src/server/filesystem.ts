@@ -114,7 +114,7 @@ export default class FileSystem {
       if (!FileInfo.isDirectory) throw new Error('Not a valid directory');
       this.cwd = clientPath;
       return this.cwd;
-    } catch(e) {
+    } catch(_) {
       const poped = path.split("/")
       poped.pop()
       return this.chdir(poped.join("/"));
