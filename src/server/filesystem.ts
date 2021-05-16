@@ -1,5 +1,5 @@
 
-import { DPath, v4, dateToString, exists } from "../../deps.ts";
+import { DPath, v4, format, exists } from "../../deps.ts";
 import { padStart } from "../_utils/lodash.ts";
 import Connection from "./connection.ts";
 
@@ -189,7 +189,7 @@ export function ls(fileStat: FileInfo): string {
   const now = new Date();
   const mtime = (!fileStat.mtime)? now : new Date(fileStat.mtime);
   const timeDiff = now.getMonth() - mtime.getMonth() + (12 * (now.getFullYear() - mtime.getFullYear()))
-  const dateFormat = timeDiff < 6 ? 'MM dd hh:mm' : 'MMM DD YYYY';
+  const dateFormat = timeDiff < 6 ? 'MM dd hh:mm' : 'MM dd yyyy';
 
   return [
     fileStat.mode ?
@@ -211,7 +211,8 @@ export function ls(fileStat: FileInfo): string {
     fileStat.uid || 1,
     fileStat.gid || 1,
     padStart(fileStat.size.toString(), 12),
-    padStart(dateToString(dateFormat, mtime), 12),
+    padStart(format(mtime, dateFormat), 12),
+    ' ',
     fileStat.name
   ].join(' ');
 }

@@ -150,10 +150,9 @@ for await (const connection of serve) {
   - [io](https://deno.land/std@0.95.0/io)
   - [path](https://deno.land/std@0.95.0/path)
   - [fs](https://deno.land/std@0.95.0/fs)
+  - [datetime](https://deno.land/std@0.96.0/datetime)
 
 - ### [getport](https://deno.land/x/getport)
-
-- ### [date_format_deno](https://deno.land/x/date_format_deno)
 
 - ### [cliffy](https://deno.land/x/cliffy)
 

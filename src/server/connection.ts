@@ -231,7 +231,7 @@ export default class Connection {
     }
     try {
       await this.close();
-    } catch (e) { /** It's closed */ }
+    } catch (_) { /** It's closed */ }
   }
 }
 

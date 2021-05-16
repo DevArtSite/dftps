@@ -158,7 +158,7 @@ export function parseCommand (message: string): CommandData & { directive: strin
   }, {args: [], flags: []});
 
   return {
-    directive,
+    directive: directive.toUpperCase(),
     args: params.args.length ? params.args.join(' ') : null,
     flags: params.flags,
     raw: message

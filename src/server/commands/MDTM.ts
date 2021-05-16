@@ -1,6 +1,6 @@
 import Connection from "../connection.ts";
 import type { CommandData } from "./_REGISTRY.ts";
-import { dateToString } from "../../../deps.ts";
+import { format } from "../../../deps.ts";
 
 export default class Mdtm {
   static directive = "MDTM";
@@ -23,7 +23,7 @@ export default class Mdtm {
       if (!this.data.args) return await this.conn.reply(550, 'Not arguments found');
       const fileStat = await this.conn.fs.get(this.data.args);
       if (!fileStat.mtime) return await this.conn.reply(550);
-      const modified = dateToString("YYYYMMDDHHmmss.SSS", new Date(fileStat.mtime));
+      const modified = format(new Date(fileStat.mtime), "YYYYMMDDHHmmss.SSS");
       return await this.conn.reply(213, modified);
     } catch (e) {
       this.conn.logger.error(e.code || 550, e.message);
