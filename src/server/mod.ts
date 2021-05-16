@@ -106,7 +106,7 @@ export class Server implements AsyncIterable<Connection> {
     const remote = connection.remoteAddr;
     this.logger.success(`New connection on ${connection.localAddr.transport}://${local.hostname}:${local.port} from ${remote.transport}://${remote.hostname}:${remote.port}`);
 	
-    if (connection) connection.done.then((message?: Error) => {
+    if (connection) connection.done.then(() => {
       this.logger.warn(`Connection closed on ${local.transport}://${local.hostname}:${local.port} from ${remote.transport}://${remote.hostname}:${remote.port}`);
       return this.untrackConnection(connection);
     })
@@ -141,8 +141,6 @@ export class Server implements AsyncIterable<Connection> {
     let conn: Deno.Conn;
     try {
       conn = await this.listener.accept();
-      // Yield the requests that arrive on the just-accepted connection.
-      yield* this.iterateConnections(conn);
     } catch (error) {
       if (
         error instanceof Deno.errors.BadResource ||
@@ -152,9 +150,12 @@ export class Server implements AsyncIterable<Connection> {
         return mux.add(this.acceptAndIterateFtpConnections(mux));
       else
         await this.webhookError(error);
+        throw error;
     }
     // Try to accept another connection and add it to the multiplexer.
     mux.add(this.acceptAndIterateFtpConnections(mux));
+    // Yield the requests that arrive on the just-accepted connection.
+    yield* this.iterateConnections(conn);
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<Connection> {

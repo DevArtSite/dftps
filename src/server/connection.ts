@@ -1,7 +1,7 @@
 import {
   deferred,
   BufWriter,
-  assert,
+  assert
 } from "../../deps.ts";
 import { Server } from "./mod.ts";
 import Logger from "../_utils/logger.ts";
@@ -197,13 +197,16 @@ export default class Connection {
 
   /** Handle commands from connection */
   async commands(): Promise<void> {
-    for await (const buffer of Deno.iter(this.conn)) {
+    while (!this.#closed) {
       try {
-
+        const buf = new Uint8Array(100)
+        const n = await this.conn.read(buf) || 0;
         /** Read data from connection */
+        const buffer = buf.slice(0, n);
         const line = new TextDecoder().decode(buffer);
+        console.log(line)
         if (!line) return;
-        //this.logger.debug(line, line.length);
+        this.logger.debug(line, line.length);
         /** Parse data */
         const parsed = parseCommand(line);
         if (!parsed.directive) return;

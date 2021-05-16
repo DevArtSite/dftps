@@ -21,7 +21,7 @@ export default class Rnfr {
       if (!this.data.args) return await this.conn.reply(501, 'Arguments not found');
       await this.conn.fs.get(this.data.args);
       this.conn.fs.renameFrom = this.data.args;
-      return await this.conn.close(350);
+      return await this.conn.reply(350);
     } catch(e) {
       e.code ||= 550;
       throw e;

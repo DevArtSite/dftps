@@ -20,7 +20,7 @@ export default class Rnto {
       if (!this.conn.fs.rename) return await this.conn.reply(402, 'Not supported by file system');
       if (!this.data.args) return await this.conn.reply(501, 'Arguments not found');
       await this.conn.fs.rename(this.conn.fs.renameFrom, this.data.args);
-      return await this.conn.close(250);
+      return await this.conn.reply(250);
     } catch(e) {
       e.code ||= 550;
       throw e;

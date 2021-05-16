@@ -2,10 +2,10 @@ import Connection from "../connection.ts";
 import type { CommandData } from "./_REGISTRY.ts";
 import ActiveConnector from "../connectors/active.ts"
 
-const FAMILY: Record<number, number> = {
-  1: 4,
-  2: 6
-};
+// const FAMILY: Record<number, number> = {
+//   1: 4,
+//   2: 6
+// };
 
 export default class Eprt {
   static directive = 'EPRT';
