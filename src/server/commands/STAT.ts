@@ -37,11 +37,10 @@ export default class Stat {
         messages.push(message);
       }
       messages.push("End");
-
       return await this.conn.reply(reply.code, messages);
     } catch(e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 450, e.message);
+      e.code ||= 450;
+      throw e;
     }
   }
 }

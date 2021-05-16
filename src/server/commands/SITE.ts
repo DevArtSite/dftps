@@ -31,8 +31,8 @@ export default class Site {
       }
       return await this.conn.reply(200);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 500, e.message);
+      e.code ||= 500;
+      throw e;
     }
   }
 }

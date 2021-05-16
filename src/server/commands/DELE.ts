@@ -23,8 +23,8 @@ export default class Dele {
       await this.conn.fs.delete(this.data.args);
       return this.conn.reply(250);
     } catch (e) {
-      this.conn.logger.error(e);
-      return this.conn.reply(550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

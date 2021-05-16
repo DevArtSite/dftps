@@ -1,7 +1,7 @@
 import Connection from "../connection.ts";
 import type { CommandData, CommandConstructor } from "./_REGISTRY.ts";
 import { REGISTRY, findCommand } from "./_REGISTRY.ts";
-import { chunk } from "../../../_utils.ts";
+import { chunk } from "../../_utils/lodash.ts";
 
 export default class Help {
   static directive = "HELP";

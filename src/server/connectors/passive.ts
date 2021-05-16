@@ -32,7 +32,7 @@ export default class PassiveConnection {
       try {
         this.listener.close();
       } catch(e) {
-        console.error("Erreur de fermeture du serveur passif: ", e);
+        throw e;
       }
       
       this.listener = undefined;
@@ -50,7 +50,7 @@ export default class PassiveConnection {
           e instanceof Deno.errors.UnexpectedEof ||
           e instanceof Deno.errors.ConnectionAborted
         )) {
-          throw new Error("Erreur de fermeture de la connection passive: " + e);
+          throw e;
         }
       }
 
@@ -84,7 +84,6 @@ export default class PassiveConnection {
       if (this.conn) this.writer = new BufWriter(this.conn);
       return;
     } catch(e) {
-      console.error(e);
       throw e;
     }
   }

@@ -28,8 +28,8 @@ export default class Auth {
       this.conn.serve.secure = true;
       return;
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 504, e.message);
+      e.code ||= 504;
+      throw e;
     }
   }
 }

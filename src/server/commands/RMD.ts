@@ -16,6 +16,10 @@ export default class Cdup {
   constructor(private conn: Connection, public data: CommandData) {}
 
   async handler(): Promise<void> {
-    return await new Dele(this.conn, this.data).handler();
+    try {
+      return await new Dele(this.conn, this.data).handler();
+    } catch(e) {
+      throw e;
+    }
   }
 }

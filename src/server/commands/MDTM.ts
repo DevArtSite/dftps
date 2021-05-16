@@ -26,8 +26,8 @@ export default class Mdtm {
       const modified = format(new Date(fileStat.mtime), "YYYYMMDDHHmmss.SSS");
       return await this.conn.reply(213, modified);
     } catch (e) {
-      this.conn.logger.error(e.code || 550, e.message);
-      return await this.conn.reply(225);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

@@ -17,6 +17,10 @@ export default class Appe {
   constructor(private conn: Connection, public data: CommandData) {}
 
   async handler(): Promise<void> {
-    return await new Stor(this.conn, this.data).handler();
+    try {
+      return await new Stor(this.conn, this.data).handler();
+    } catch(e) {
+      throw e;
+    }
   }
 }

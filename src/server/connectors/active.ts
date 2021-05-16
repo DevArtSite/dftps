@@ -16,11 +16,15 @@ export default class ActiveConnector {
   }
 
   private async connect({ hostname, port }: { hostname: string, port: number }): Promise<Deno.Conn> {
-    if (!this.connection.serve.secure && !(this.connection.serve.addr as Deno.ListenTlsOptions).certFile) {
-      return await Deno.connect({ hostname, port });
-    } else {
-      const certFile = (this.connection.serve.addr as Deno.ListenTlsOptions).certFile
-      return await Deno.connectTls({ hostname, port, certFile });
+    try {
+      if (!this.connection.serve.secure && !(this.connection.serve.addr as Deno.ListenTlsOptions).certFile) {
+        return await Deno.connect({ hostname, port });
+      } else {
+        const certFile = (this.connection.serve.addr as Deno.ListenTlsOptions).certFile;
+        return await Deno.connectTls({ hostname, port, certFile });
+      }
+    } catch(e) {
+      throw e;
     }
   }
 
@@ -28,15 +32,19 @@ export default class ActiveConnector {
     try {
       if (this.conn) this.conn.close();
     } catch(e) {
-      console.error("Erreur de fermeture du serveur passif: ", e);
+      throw e;
     }
   }
 
   async accept () {
-    if (!this.conn && this.hostname && this.port) this.conn = await this.connect({ hostname: this.hostname, port: this.port });
-    if (this.conn) this.reader = new BufReader(this.conn);
-    if (this.conn) this.writer = new BufWriter(this.conn);
-    return this;
+    try {
+      if (!this.conn && this.hostname && this.port) this.conn = await this.connect({ hostname: this.hostname, port: this.port });
+      if (this.conn) this.reader = new BufReader(this.conn);
+      if (this.conn) this.writer = new BufWriter(this.conn);
+      return this;
+    } catch(e) {
+      throw e;
+    }
   }
 
   async create(hostname: string, port: number) {

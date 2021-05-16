@@ -104,6 +104,7 @@ export default class Connection {
       return;
     } catch (e) {
       this.logger.error(e);
+      await this.serve.webhookError(e);
       await this.reply(430, e).catch((error: Error) => { throw error; });
     }
   }
@@ -115,6 +116,7 @@ export default class Connection {
     //{ root = '', cwd = '', fs = null, blacklist = [] }
     const data = await resolvePassword.catch(async (error: Error) => {
       this.logger.error(error);
+      await this.serve.webhookError(error);
       await this.reply(430, error).catch((error: Error) => { throw error; });
     });
     if (!data) return await this.reply(430, 'LoginData undefined').catch((error: Error) => { throw error; });
@@ -181,6 +183,7 @@ export default class Connection {
           await letter.writer.flush();
         } catch (e) {
           this.logger.error(e);
+          await this.serve.webhookError(e);
           try {
             // Eagerly close on error.
             await this.conn.close();
@@ -226,7 +229,9 @@ export default class Connection {
         /** Run function handler */
         await command.handler();
       } catch (e) {
-        throw e;
+        this.logger.error(e);
+        await this.serve.webhookError(e);
+        await this.reply(e.code || 550, e.message);
       }
     }
     try {

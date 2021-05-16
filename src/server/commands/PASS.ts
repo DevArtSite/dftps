@@ -24,8 +24,8 @@ export default class Pass {
       await this.conn.login(this.data.args);
       return await this.conn.reply(230);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.close(e.code || 530, e.message);
+      e.code ||= 530;
+      throw e;
     }
   }
 }

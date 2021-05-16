@@ -17,6 +17,10 @@ export default class Nlst {
   constructor(private conn: Connection, public data: CommandData) {}
 
   async handler(): Promise<void> {
-    return await new List(this.conn, this.data).handler();
+    try {
+      return await new List(this.conn, this.data).handler();
+    } catch(e) {
+      throw e;
+    }
   }
 }

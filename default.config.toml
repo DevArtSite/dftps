@@ -16,6 +16,8 @@
 # fileFormat?: string;
   # Array of commands that are not allowed
 # blacklist?: string[];
+  # Url of webhook like Discord webhook
+# webhook="webhook-url"
 
 [database]
   # Select your connector type ("MariaDB" | "MongoDB" | "MySQL" | "PostgreSQL" | "SQLite")

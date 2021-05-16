@@ -30,8 +30,8 @@ export default class Port {
       await this.conn.connector.create(ip, port);
       return await this.conn.reply(200);
     } catch(e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 425, e.message);
+      e.code ||= 425;
+      throw e;
     }
   }
 }

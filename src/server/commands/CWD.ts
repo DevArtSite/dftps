@@ -24,8 +24,8 @@ export default class Cwd {
       const cwd = await this.conn.fs.chdir(this.data.args);
       return await this.conn.reply(250, `"${cwd.replace(/"/g, '""')}"`);
     } catch (e) {
-      this.conn.logger.error(e);
-      this.conn.reply(e.code || 550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

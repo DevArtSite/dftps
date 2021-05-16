@@ -23,8 +23,8 @@ export default class Pwd {
       const cwd = this.conn.fs.currentDirectory();
       return await this.conn.reply(257, `"${cwd.replace(/"/g, '""')}"`);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

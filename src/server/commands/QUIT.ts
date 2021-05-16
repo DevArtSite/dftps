@@ -15,6 +15,10 @@ export default class Quit {
   constructor(private conn: Connection, public data: CommandData) {}
 
   async handler(): Promise<void> {
-    return await this.conn.close(221, 'Client called QUIT');
+    try {
+      return await this.conn.close(221, 'Client called QUIT');
+    } catch(e) {
+      throw e;
+    }
   }
 }

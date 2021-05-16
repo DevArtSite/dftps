@@ -23,8 +23,9 @@ export default class Mkd {
       const path = await this.conn.fs.mkdir(this.data.args);
       return await this.conn.reply(257, `${path.replace(/"/g, '""')} directory created!`);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 550, e.message || `Directory NOT created!`);
+      e.code ||= 550;
+      e.message ||= "Directory NOT created!";
+      throw e;
     }
   }
 }

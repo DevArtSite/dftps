@@ -23,8 +23,8 @@ export default class Rnfr {
       this.conn.fs.renameFrom = this.data.args;
       return await this.conn.close(350);
     } catch(e) {
-      this.conn.logger.error(e);
-      return this.conn.reply(e.code || 550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

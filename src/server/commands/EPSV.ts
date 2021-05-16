@@ -22,7 +22,8 @@ export default class Epsv {
       const { port } = this.conn.connector.create();
       return await this.conn.reply(229, `EPSV OK (|||${port}|)`);
     } catch (e) {
-      return await this.conn.reply(e.code || 425, e.message);
+      e.code ||= 425;
+      throw e;
     }
   }
 }

@@ -22,8 +22,8 @@ export default class Rnto {
       await this.conn.fs.rename(this.conn.fs.renameFrom, this.data.args);
       return await this.conn.close(250);
     } catch(e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

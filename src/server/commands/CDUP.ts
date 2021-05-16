@@ -17,6 +17,10 @@ export default class Cdup {
 
   async handler(): Promise<void> {
     this.data.args = '..';
-    return await new Cwd(this.conn, this.data).handler();
+    try {
+      return await new Cwd(this.conn, this.data).handler();
+    } catch(e) {
+      throw e;
+    }
   }
 }

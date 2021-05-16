@@ -7,11 +7,11 @@ export type FileSystemOptions = {
   root: string;
   cwd?: string;
   uid: number;
-  gid: number
+  gid: number;
 }
 
-export type statFunction = (fileStat: FileInfo) => string
-export type FileInfo = Deno.FileInfo & { name: string }
+export type statFunction = (fileStat: FileInfo) => string;
+export type FileInfo = Deno.FileInfo & { name: string };
 
 export type StreamFile = { 
   stream: Deno.File;
@@ -19,8 +19,8 @@ export type StreamFile = {
 }
 
 type ResolvedPath = {
-  clientPath: string,
-  fsPath: string
+  clientPath: string;
+  fsPath: string;
 }
 
 export default class FileSystem {
@@ -45,15 +45,23 @@ export default class FileSystem {
   }
 
   async access(path: string): Promise<boolean> {
-    const stat = await Deno.stat(path);
-    return (this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid)
+    try {
+      const stat = await Deno.stat(path);
+      return (this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid);
+    } catch(e) {
+      throw e;
+    }
   }
 
   async own(): Promise<{ uid: number | null, gid: number | null }> {
-    const stat = await Deno.stat(this._root);
-    const uid = (this.uid) ? this.uid : stat.uid;
-    const gid = (this.gid) ? this.gid : stat.uid;
-    return { uid, gid };
+    try {
+      const stat = await Deno.stat(this._root);
+      const uid = (this.uid) ? this.uid : stat.uid;
+      const gid = (this.gid) ? this.gid : stat.uid;
+      return { uid, gid };
+    } catch(e) {
+      throw e;
+    }
   }
 
   _resolvePath(path = '.'): ResolvedPath {
@@ -72,7 +80,9 @@ export default class FileSystem {
       const { fsPath } = this._resolvePath(fileName);
       const stat = await Deno.stat(fsPath);
       return Object.assign(stat, { name: fileName });
-    } catch (e) { throw e }
+    } catch (e) {
+      throw e;
+    }
   }
 
   private FORMATS: Record<string, statFunction> = { ls, ep }
@@ -80,31 +90,31 @@ export default class FileSystem {
     if (typeof format === 'function') {
       try {
         const result = format(fileStat);
-        if (result) return result 
+        if (result) return result ;
       } catch (e) {
         throw e
       }
     } else if (typeof format === 'string') {
-      if (typeof this.FORMATS[format] === 'undefined') {
-        throw new Error('Bad file stat formatter');
-      }
+      if (typeof this.FORMATS[format] === 'undefined') throw new Error('Bad file stat formatter');
       return this.FORMATS[format](fileStat);
-    } else return ''
+    } else return '';
   }
 
   async list(path = '.') {
     const { fsPath } = this._resolvePath(path);
-    const files = []
-    for await (const dirEntry of Deno.readDir(fsPath)) {
-        const fileName = dirEntry.name
-        const filePath = DPath.join(fsPath, fileName);
-        const access = this.access(filePath);
-        const stat = await Deno.stat(filePath);
-        if (access/*(this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid)*/) {
-          files.push(Object.assign(stat, { name: fileName }));
-        }
+    const files = [];
+    try {
+      for await (const dirEntry of Deno.readDir(fsPath)) {
+          const fileName = dirEntry.name;
+          const filePath = DPath.join(fsPath, fileName);
+          const access = this.access(filePath);
+          const stat = await Deno.stat(filePath);
+          if (access) files.push(Object.assign(stat, { name: fileName }));
+      }
+      return files;
+    } catch(e) {
+      throw e;
     }
-    return files;
   }
 
   async chdir(path = '.'): Promise<string> {
@@ -115,47 +125,60 @@ export default class FileSystem {
       this.cwd = clientPath;
       return this.cwd;
     } catch(_) {
-      const poped = path.split("/")
-      poped.pop()
+      const poped = path.split("/");
+      poped.pop();
       return this.chdir(poped.join("/"));
     }
   }
 
   async write(fileName: string, data: Uint8Array, { append = false } = {}): Promise<void> {
     const { fsPath } = this._resolvePath(fileName);
-    if (await exists(fsPath)) {
-      const access = this.access(fsPath);
-      if (!access) throw new Error("You don't have permissions!");
+    try {
+      if (await exists(fsPath)) {
+        const access = this.access(fsPath);
+        if (!access) throw new Error("You don't have permissions!");
+      }
+      let chown = false;
+      if (!await exists(fsPath)) chown = true;
+      await Deno.writeFile(fsPath, data, { append });
+      if (chown) await this.chown(fsPath);
+    } catch(e) {
+      throw e;
     }
-    let chown = false;
-    if (!await exists(fsPath)) chown = true;
-    await Deno.writeFile(fsPath, data, { append });
-    if (chown) await this.chown(fsPath);
   }
 
   async read(fileName: string): Promise<StreamFile> {
     const {fsPath, clientPath} = this._resolvePath(fileName);
     const access = this.access(fsPath);
     if (!access) throw new Error("You don't have permissions!");
-    const stream = await Deno.open(fsPath, { read: true });
-    return {
-      stream,
-      clientPath
-    };
+    try {
+      const stream = await Deno.open(fsPath, { read: true });
+      return { stream, clientPath };
+    } catch(e) {
+      throw e;
+    }
   }
 
   async delete(path: string): Promise<void> {
     const { fsPath } = this._resolvePath(path);
     const access = this.access(fsPath);
     if (!access) throw new Error("You don't have permissions!");
-    return await Deno.remove(fsPath, { recursive: true });
+    try {
+      return await Deno.remove(fsPath, { recursive: true });
+    } catch(e) {
+      throw e;
+    }
   }
 
   async mkdir(path: string): Promise<string> {
     const { fsPath } = this._resolvePath(path);
-    await Deno.mkdir(fsPath, { recursive: true });
-    await this.chown(fsPath);
-    return fsPath;
+    try {
+      await Deno.mkdir(fsPath, { recursive: true });
+      await this.chown(fsPath);
+      return fsPath;
+    } catch(e) {
+      throw e;
+    }
   }
 
   async rename(from: string, to: string) {
@@ -163,21 +186,33 @@ export default class FileSystem {
     const { fsPath: toPath} = this._resolvePath(to);
     const access = this.access(fromPath);
     if (!access) throw new Error("You don't have permissions!");
-    return await Deno.rename(fromPath, toPath);
+    try {
+      return await Deno.rename(fromPath, toPath);
+    } catch(e) {
+      throw e;
+    }
   }
 
   async chmod(path: string, mode: number) {
     const { fsPath } = this._resolvePath(path);
     const access = this.access(fsPath);
     if (!access) throw new Error("You don't have permissions!");
-    return await Deno.chmod(fsPath, mode);
+    try {
+      return await Deno.chmod(fsPath, mode);
+    } catch(e) {
+      throw e;
+    }
   }
 
   async chown(path: string, _uid?: number, _gid?: number): Promise<void> {
     const { uid, gid } = await this.own();
     const access = this.access(path);
     if (!access) throw new Error("You don't have permissions!");
-    await Deno.chown(path, _uid || uid, _gid || gid);
+    try {
+      await Deno.chown(path, _uid || uid, _gid || gid);
+    } catch(e) {
+      throw e;
+    }
   }
 
   getUniqueName(): string {

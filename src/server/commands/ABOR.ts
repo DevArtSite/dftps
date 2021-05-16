@@ -23,8 +23,8 @@ export default class Abor {
       }
       return await this.conn.reply(226);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 225, e.message);
+      e.code ||= 225;
+      throw e;
     }
   }
 }

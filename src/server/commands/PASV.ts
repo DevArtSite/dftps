@@ -25,7 +25,8 @@ export default class Pasv {
       const i2 = port % 256;
       return await this.conn.reply(227, `Entering Passive Mode (${hostname.split('.').join(',')},${i1},${i2})`);
     } catch (e) {
-      return await this.conn.reply(e.code || 425, e.message);
+      e.code ||= 425;
+      throw e;
     }
   }
 }

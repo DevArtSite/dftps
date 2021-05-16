@@ -35,8 +35,8 @@ export default class Retr {
       this.conn.connector.conn.close();
       return await this.conn.reply(226, clientPath);
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 551, e.message);
+      e.code ||= 551;
+      throw e;
     }
   }
 }

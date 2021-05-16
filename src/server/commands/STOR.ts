@@ -33,8 +33,8 @@ export default class Stor {
       await this.conn.reply(226, filePath);
       return this.conn.connector.close();
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 550, e.message);
+      e.code ||= 550;
+      throw e;
     }
   }
 }

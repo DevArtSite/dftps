@@ -16,17 +16,22 @@ export default class Stou {
   constructor(private conn: Connection, public data: CommandData) {}
 
   async handler(): Promise<void> {
-    if (!this.conn.fs) return await this.conn.reply(550, 'File system not instantiated');
-    if (!this.conn.fs.get) return await this.conn.reply(402, 'Not supported by file system');
-    if (!this.data.args) return await this.conn.reply(501, 'Arguments not found');
-    const fileName = this.data.args;
-    const getUniqueName = this.conn.fs.getUniqueName;
-    this.conn.fs.get(this.data.args)
-      .then(() => getUniqueName())
-      .catch(() => fileName)
-      .then((name: string) => {
-        this.data.args = name;
-        return new Stor(this.conn, this.data).handler();
-      });
+    try {
+      if (!this.conn.fs) return await this.conn.reply(550, 'File system not instantiated');
+      if (!this.conn.fs.get) return await this.conn.reply(402, 'Not supported by file system');
+      if (!this.data.args) return await this.conn.reply(501, 'Arguments not found');
+      const fileName = this.data.args;
+      const getUniqueName = this.conn.fs.getUniqueName;
+      this.conn.fs.get(this.data.args)
+        .then(() => getUniqueName())
+        .catch(() => fileName)
+        .then((name: string) => {
+          this.data.args = name;
+          return new Stor(this.conn, this.data).handler();
+        });
+    } catch(e) {
+      e.code ||= 550;
+      throw e;
+    }
   }
 }

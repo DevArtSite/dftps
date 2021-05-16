@@ -19,6 +19,8 @@ export type FTPServerOptions = {
   fileFormat?: string;
   /** Array of commands that are not allowed */
   blacklist?: string[];
+  /** Url of webhook like Discord webhook */
+  webhook?: string;
 }
 
 export class Server implements AsyncIterable<Connection> {
@@ -53,6 +55,25 @@ export class Server implements AsyncIterable<Connection> {
     this.logger.info(`Listen on ${this.addr.hostname}:${this.addr.port}`);
   }
 
+  async webhookError(e: Error | string) {
+    if (!this.options.webhook) return;
+    const content = (typeof e === "string") ? e : `${e.stack}`
+    const options = {
+      method: 'POST',
+      body: JSON.stringify({
+        content,
+        avatar_url: "https://github.com/DevArtSite/dftps/blob/05c8060f5eb4a9113d7b5d2e1654aaaf14e74a5c/assets/dftps_logo.png",
+        username: "DFtpS Error"
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    }
+    try {
+      await fetch(this.options.webhook, options);
+    } catch(e) {
+      this.logger.error("WebhookError - ", e);
+    }
+  }
+
   /** Close all connections and listener */
   async close(): Promise<void> {
     this.#closed = true;
@@ -62,7 +83,7 @@ export class Server implements AsyncIterable<Connection> {
         await conn.close();
       } catch (e) {
         // Connection might have been already closed
-        if (!(e instanceof Deno.errors.BadResource)) throw e;
+        if (!(e instanceof Deno.errors.BadResource)) await this.webhookError(e);
       }
     }
   }
@@ -100,9 +121,10 @@ export class Server implements AsyncIterable<Connection> {
         error instanceof Deno.errors.UnexpectedEof ||
         error instanceof Deno.errors.ConnectionAborted ||
         error instanceof DenoStdInternalError
-      )
-        await connection.close().catch(this.logger.error)
-      else
+      ) {
+        await connection.close();
+        await this.webhookError(error);
+      } else
         throw error;
     }
   }
@@ -119,6 +141,8 @@ export class Server implements AsyncIterable<Connection> {
     let conn: Deno.Conn;
     try {
       conn = await this.listener.accept();
+      // Yield the requests that arrive on the just-accepted connection.
+      yield* this.iterateConnections(conn);
     } catch (error) {
       if (
         error instanceof Deno.errors.BadResource ||
@@ -127,12 +151,10 @@ export class Server implements AsyncIterable<Connection> {
       )
         return mux.add(this.acceptAndIterateFtpConnections(mux));
       else
-        throw error;
+        await this.webhookError(error);
     }
     // Try to accept another connection and add it to the multiplexer.
     mux.add(this.acceptAndIterateFtpConnections(mux));
-    // Yield the requests that arrive on the just-accepted connection.
-    yield* this.iterateConnections(conn);
   }
 
   [Symbol.asyncIterator](): AsyncIterableIterator<Connection> {

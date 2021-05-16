@@ -54,8 +54,8 @@ export default class List {
 
       } else return await this.conn.reply(402, 'Not passive found');
     } catch (e) {
-      this.conn.logger.error(e);
-      return await this.conn.reply(e.code || 226, e.message);
+      e.code ||= 226;
+      throw e;
     }
   }
 }
