@@ -25,10 +25,9 @@ const tomlJson = (source: { fileUrl?: string; data?: string }): any => {
 
   arr = arr.map(str => str.replaceAll("\r", ""));
 
-  for (let str of arr) {
-    if (str.indexOf('#') !== -1) {
-      str = str.slice(0, str.indexOf('#') - 1);
-    }
+  for (const str of arr) {
+    if (str.indexOf('#') !== -1) continue;
+
     let noSpace = str.replace(/(^ +)|( +$)/g, '');
 
     if (noSpace !== '') {
@@ -56,6 +55,12 @@ const tomlJson = (source: { fileUrl?: string; data?: string }): any => {
           valueArrayB = '';
           keyArrayB = '';
 
+          const testSyntax = /^(.+)=(.+)/.exec(noSpace);
+          if (testSyntax && testSyntax.length > 0) {
+            const k = testSyntax[1];
+            const v = testSyntax[2];
+            if (k[k.length-1] !== " " && v[v.length -1] !== " ") throw new Error("Syntaxe like \"key='value'\" is not allowed! You have to replace \"key='value'\" by \"key = 'value'\" with spaces on each side of the equal sign.")
+          }
           const sttr = /^(.+) = (.+)/.exec(noSpace);
 
           if (sttr) {
@@ -76,6 +81,7 @@ const tomlJson = (source: { fileUrl?: string; data?: string }): any => {
       }
     }
   }
+  console.log(obj)
   return obj;
 };
 
