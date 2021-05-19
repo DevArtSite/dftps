@@ -81,7 +81,6 @@ const tomlJson = (source: { fileUrl?: string; data?: string }): any => {
       }
     }
   }
-  console.log(obj)
   return obj;
 };
 
