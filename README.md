@@ -40,6 +40,8 @@ const serve = new Server({
   port: 21,
   hostname: "127.0.0.1" // (optional)
 }, {
+  /** Debug mode */
+  debug: boolean;
   /** Url for passive connection. */
   pasvUrl?: string; // (optional)
   /** Minimum port for passive connection. */
@@ -52,6 +54,8 @@ const serve = new Server({
   fileFormat?: string; // (optional)
   /** Array of commands that are not allowed */
   blacklist?: string[];
+  /** Url of webhook like Discord webhook */
+  webhook?: string;
 });
 
 for await (const connection of serve) {
@@ -103,6 +107,8 @@ const serve = new Server({
   port: 21,
   hostname: "127.0.0.1" // (optional)
 }, {
+  /** Debug mode */
+  debug: boolean;
   /** Url for passive connection. */
   pasvUrl: string, // (optional)
   /** Minimum port for passive connection. */
@@ -115,6 +121,8 @@ const serve = new Server({
   fileFormat: string, // (optional)
   /** Array of commands that are not allowed */
   blacklist: string[] // (optional)
+  /** Url of webhook like Discord webhook */
+  webhook?: string;
 });
 
 for await (const connection of serve) {
