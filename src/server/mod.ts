@@ -7,6 +7,8 @@ export type FTPOptions = Omit<Deno.ListenOptions, "transport">;
 
 /** General options of ftp server */
 export type FTPServerOptions = {
+  /** Debug mode */
+  debug?: boolean;
   /** Url for passive connection. */
   pasvUrl?: string;
   /** Minimum port for passive connection. */
@@ -23,7 +25,9 @@ export type FTPServerOptions = {
   webhook?: string;
 }
 
-export class Server implements AsyncIterable<Connection> {
+export type webookOptions = string | number | Error;
+
+class Server implements AsyncIterable<Connection> {
   #closed = false;
   #connections: Connection[] = [];
 
@@ -33,37 +37,60 @@ export class Server implements AsyncIterable<Connection> {
   /** TCP listener */
   listener: Deno.Listener;
   secure = false;
+
   logger: Logger;
   constructor(addr: Deno.ListenOptions | Deno.ListenTlsOptions, _options?: FTPServerOptions) {
-    // Listener options initializer assigned to default listener options
+    this.logger = Logger.create({ prefix: "[Server] =>" });
+
+    /** Listener options initializer assigned to default listener options */
     this.addr = Object.assign({
       hostname: "127.0.0.1",
       port: 21
     }, addr);
-    // General options initializer assigned to default general options
+
+    /** General options initializer assigned to default general options */
     this.options = Object.assign({
       pasvUrl: (this.addr as Deno.NetAddr).hostname
     }, _options);
-    // Listener initializer
-    if (!(this.addr as Deno.ListenTlsOptions).certFile) this.listener = Deno.listen((this.addr as Deno.ListenOptions));
-    else {
+
+    /** Debug listener options */
+    this.debug("Listener options: ", (this.addr as Deno.ListenTlsOptions));
+
+    if (!(this.addr as Deno.ListenTlsOptions).certFile) {
+      /** Start listener without tls */
+      this.listener = Deno.listen((this.addr as Deno.ListenOptions));
+    } else {
+      this.logger.warn("Listener over TLS has not been completely tested and is likely to have malfunctions, some certificate can unfortunately still be supported by deno and can therefore cause errors.")
+      /** Start listener with tls */
       this.listener = Deno.listenTls((this.addr as Deno.ListenTlsOptions));
       this.secure = true;
     }
-    
-    this.logger = new Logger({ prefix: "[Server] =>" });
-    this.logger.info(`Listen on ${this.addr.hostname}:${this.addr.port}`);
+    //this.serve.debug("Connection: ", (this.addr as Deno.ListenTlsOptions));
+    /** Info of  */
+    this.logger.info(`Listen on ${this.addr.hostname}:${this.addr.port} ${(this.secure) ? "with" : "without"} TLS`);
   }
 
-  async webhookError(e: Error | string) {
+  // deno-lint-ignore no-explicit-any
+  debug(...args: any[]): void {
+    if (this.options?.debug) this.logger.debug(...args);
+  }
+
+  async webhookError(...args: webookOptions[]) {
     if (!this.options.webhook) return;
-    const content = (typeof e === "string") ? e : `${e.stack}`
+    this.debug("Send Error on webhook: ", this.options.webhook);
+    const content = args.map((arg: webookOptions) => {
+      return (typeof arg === "string" || typeof args === "number") ? arg
+      : (arg instanceof Error) ? `${arg.stack}`
+        : (arg.toString) ? arg.toString
+          : `${arg}`;
+    }).join("\\n");
+
     const options = {
       method: 'POST',
       body: JSON.stringify({
         content,
-        avatar_url: "https://github.com/DevArtSite/dftps/blob/05c8060f5eb4a9113d7b5d2e1654aaaf14e74a5c/assets/dftps_logo.png",
-        username: "DFtpS Error"
+        avatar_url: "https://github.com/DevArtSite/dftps/raw/main/assets/dftps_logo_tiny.png",
+        username: "DFtpS"
       }),
       headers: { 'Content-Type': 'application/json' }
     }
@@ -86,13 +113,16 @@ export class Server implements AsyncIterable<Connection> {
         if (!(e instanceof Deno.errors.BadResource)) await this.webhookError(e);
       }
     }
+    this.debug("Listener closed");
   }
 
   private trackConnection(conn: Connection): void {
+    this.debug("Track connection: ", conn.rid);
     this.#connections.push(conn);
   }
 
   private untrackConnection(conn: Connection): void {
+    this.debug("Untrack connection: ", conn.rid);
     const index = this.#connections.indexOf(conn);
     if (index !== -1) this.#connections.splice(index, 1);
   }
@@ -106,26 +136,30 @@ export class Server implements AsyncIterable<Connection> {
     const remote = connection.remoteAddr;
     this.logger.success(`New connection on ${connection.localAddr.transport}://${local.hostname}:${local.port} from ${remote.transport}://${remote.hostname}:${remote.port}`);
 	
-    if (connection) connection.done.then(() => {
+    if (connection) connection.done.then((message?: string) => {
       this.logger.warn(`Connection closed on ${local.transport}://${local.hostname}:${local.port} from ${remote.transport}://${remote.hostname}:${remote.port}`);
+      this.debug("Connection close with: ", message);
       return this.untrackConnection(connection);
     })
     this.trackConnection(connection);
     yield connection;
+
     try {
       await connection.commands();
-    } catch (error) {
+      this.debug("Connection: ", (this.addr as Deno.ListenTlsOptions));
+    } catch (e) {
       if (
-        error instanceof Deno.errors.BadResource ||
-        error instanceof Deno.errors.InvalidData ||
-        error instanceof Deno.errors.UnexpectedEof ||
-        error instanceof Deno.errors.ConnectionAborted ||
-        error instanceof DenoStdInternalError
+        e instanceof Deno.errors.BadResource ||
+        e instanceof Deno.errors.InvalidData ||
+        e instanceof Deno.errors.UnexpectedEof ||
+        e instanceof Deno.errors.ConnectionAborted ||
+        e instanceof DenoStdInternalError
       ) {
-        await connection.close();
-        await this.webhookError(error);
-      } else
-        throw error;
+        await connection.close(500, e.message);
+        //await this.webhookError(e);
+      } else {
+        throw e;
+      }
     }
   }
 
@@ -141,16 +175,19 @@ export class Server implements AsyncIterable<Connection> {
     let conn: Deno.Conn;
     try {
       conn = await this.listener.accept();
-    } catch (error) {
+      this.debug("Listener connection accepted: ", conn.rid);
+    } catch (e) {
       if (
-        error instanceof Deno.errors.BadResource ||
-        error instanceof Deno.errors.InvalidData ||
-        error instanceof Deno.errors.UnexpectedEof
-      )
+        e instanceof Deno.errors.BadResource ||
+        e instanceof Deno.errors.InvalidData ||
+        e instanceof Deno.errors.UnexpectedEof
+      ) {
         return mux.add(this.acceptAndIterateFtpConnections(mux));
-      else
-        await this.webhookError(error);
-        throw error;
+      } else {
+        //this.logger.error(e)
+        await this.webhookError("The ftp server will close due to:", e);
+        throw e;
+      }
     }
     // Try to accept another connection and add it to the multiplexer.
     mux.add(this.acceptAndIterateFtpConnections(mux));
@@ -164,3 +201,5 @@ export class Server implements AsyncIterable<Connection> {
     return mux.iterate();
   }
 }
+
+export default Server;

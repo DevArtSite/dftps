@@ -39,6 +39,8 @@ export async function upgradable() {
 await ConfigFileChecker();
 const config = tomlJson({ fileUrl: configFile });
 
+if (!config || !config.database) throw new Error("Database configuration not found in " + configFile)
+
 await createDb((config.database as Configs));
 
 const cmd = await new Command()

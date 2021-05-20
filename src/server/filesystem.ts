@@ -48,8 +48,8 @@ export default class FileSystem {
     try {
       const stat = await Deno.stat(path);
       return (this.uid === 0 || this.gid === 0 || this.uid === stat.uid || this.gid === stat.gid);
-    } catch(e) {
-      throw e;
+    } catch(_) {
+      return false;
     }
   }
 
@@ -76,11 +76,12 @@ export default class FileSystem {
   }
 
   async get(fileName: string): Promise<FileInfo> {
+    const { fsPath } = this._resolvePath(fileName);
     try {
-      const { fsPath } = this._resolvePath(fileName);
       const stat = await Deno.stat(fsPath);
       return Object.assign(stat, { name: fileName });
     } catch (e) {
+      if (e instanceof Deno.errors.NotFound) throw new Deno.errors.NotFound(`No such following file or directory "${fsPath}" `);
       throw e;
     }
   }
@@ -125,6 +126,7 @@ export default class FileSystem {
       this.cwd = clientPath;
       return this.cwd;
     } catch(_) {
+      if (_ instanceof Deno.errors.NotFound) throw new Deno.errors.NotFound(`No such following file or directory "${fsPath}" `);
       const poped = path.split("/");
       poped.pop();
       return this.chdir(poped.join("/"));

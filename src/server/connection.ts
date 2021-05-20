@@ -3,8 +3,9 @@ import {
   BufWriter,
   assert
 } from "../../deps.ts";
-import { Server } from "./mod.ts";
-import Logger from "../_utils/logger.ts";
+import Server from "./mod.ts";
+import IterablleReader from "../_utils/iterableReader.ts";
+import Logger, { Colors } from "../_utils/logger.ts";
 import { STATUS_TEXT } from "./ftp_status.ts";
 import { compact } from "../_utils/lodash.ts";
 
@@ -66,30 +67,37 @@ export default class Connection {
   uid?: number;
   gid?: number;
   authenticated = false;
-  
   software?: string;
 
+  reader: IterablleReader;
   fs?: FileSystem;
   transferType = "binary";
   encoding = 'utf8';
   connector?: PassiveConnection | ActiveConnection;
   restByteCount = 0;
   bufferSize = 0;
-  done: Deferred<Error | undefined> = deferred();
-  #checkHealthInt?: number;
+  done: Deferred<string | undefined> = deferred();
 
   serve: Server;
   conn: Deno.Conn;
   options: FTPServerOptions & { pasvUrl: string };
+  rid: number;
   constructor(serve: Server, conn: Deno.Conn, options: FTPServerOptions & { pasvUrl: string }) {
     this.serve = serve;
-    this.conn = conn; 
+    this.conn = conn;
+    this.reader = new IterablleReader(conn);
+    this.rid = conn.rid;
     this.localAddr = (conn.localAddr as Deno.NetAddr);
     this.remoteAddr = (conn.remoteAddr as Deno.NetAddr);
     this.options = options;
     
-    this.logger = new Logger({ prefix: `[Connection (rid: ${conn.rid})] => ` });
-    this.reply(220, "Welcome").then().catch((error: Error) => { throw error; });
+    this.logger = Logger.create({ prefix: `[Connection (rid: ${conn.rid})] => ` });
+    setTimeout(async () => await this.reply(220, "Welcome"), 500);
+  }
+
+  // deno-lint-ignore no-explicit-any
+  private debug(...args: any[]): void {
+    this.logger.debug("Debug: ", ...args);
   }
 
   get closed() {
@@ -103,11 +111,10 @@ export default class Connection {
     try {
       await resolveUsername;
       this.username = username;
-      return;
+      return this.logger.success(`Username: ${this.username} accepted.`);
     } catch (e) {
       this.logger.error(e);
-      await this.serve.webhookError(e);
-      await this.reply(430, e).catch((error: Error) => { throw error; });
+      await this.reply(430, e);
     }
   }
 
@@ -118,10 +125,9 @@ export default class Connection {
     //{ root = '', cwd = '', fs = null, blacklist = [] }
     const data = await resolvePassword.catch(async (error: Error) => {
       this.logger.error(error);
-      await this.serve.webhookError(error);
-      await this.reply(430, error).catch((error: Error) => { throw error; });
+      await this.reply(430, error);
     });
-    if (!data) return await this.reply(430, 'LoginData undefined').catch((error: Error) => { throw error; });
+    if (!data) return await this.reply(430, 'LoginData undefined');
     const { root, uid, gid } = data;
 
     if (data.blacklist && data.blacklist.length > 0) data.blacklist.forEach((directive: string) => {
@@ -130,8 +136,10 @@ export default class Connection {
     });
     // command.blacklist = _.concat(this.commands.blacklist, blacklist);
     this.fs = data.fs || new FileSystem(this, { root, cwd: data.cwd || '', uid, gid });
+    const access = await this.fs.access(root);
+    if (!access) return await this.reply(550, "You do not have the required permissions to access the root directory or the root folder does not exist.");
     this.authenticated = true;
-    this.logger.info(`Login username ${this.username} success`);
+    this.logger.success(`Login: user ${this.username} connected.`);
     return;
   }
 
@@ -141,7 +149,7 @@ export default class Connection {
       if (code) await this.reply(code, message);
       if (this.connector) this.connector.close();
       this.#closed = true;
-      return await this.done.resolve(new Error(message));
+      await this.done.resolve(message);
     } catch (e) {
       throw e;
     } 
@@ -177,15 +185,19 @@ export default class Connection {
 
     for (const letter of satisfiedLetters) {
       if (letter && typeof letter !== 'string' && letter.writer) {
-        this.logger.info(`Reply: ${letter.message}`)
+        this.logger.info(Colors.FgCyan, ` Reply: ${letter.message}`);
         try {
           const content = encode(letter.message + '\r\n');
           const n = await letter.writer.write(content);
+          /** Debug reply message */
+          this.debug(`reply assert write, (${n}===${content.byteLength}) => ${(n === content.byteLength)}`);
           assert(n === content.byteLength);
           await letter.writer.flush();
         } catch (e) {
-          this.logger.error(e);
-          await this.serve.webhookError(e);
+          if (!(e instanceof Deno.errors.BadResource)) {
+            await this.serve.webhookError(e);
+            this.logger.error(e);
+          }
           try {
             // Eagerly close on error.
             await this.conn.close();
@@ -193,24 +205,28 @@ export default class Connection {
             // Pass
           }
         }
-      } else this.logger.error({message: letter.message}, 'Could not write message');
+      } else {
+        this.logger.error({message: letter.message}, 'Could not write message');
+      }
     }
   }
 
   /** Handle commands from connection */
   async commands(): Promise<void> {
-    while (!this.#closed) {
+    for await (const uint of this.reader) {
       try {
-        const buf = new Uint8Array(100)
-        const n = await this.conn.read(buf) || 0;
-        /** Read data from connection */
-        const buffer = buf.slice(0, n);
-        const line = new TextDecoder().decode(buffer);
+        const line = new TextDecoder().decode(uint);
         if (!line) return;
-        this.logger.debug(line, line.length);
+
+        /** Debug line */
+        this.debug(`commands new line: ${line}`);
+
         /** Parse data */
         const parsed = parseCommand(line);
         if (!parsed.directive) return;
+
+        /** Debug parsed */
+        this.debug(`commands line parsed: ${parsed}`);
 
         /** Reject blacklisted */
         if (this.options.blacklist && this.options.blacklist.indexOf(parsed.directive) !== -1) {
@@ -219,7 +235,10 @@ export default class Connection {
 
         /** Find command */
         const Constructor = findCommand(parsed.directive);
-        if (!Constructor) return;
+        if (!Constructor) return await this.reply(502, "Command not implemented");
+
+        /** Debug Constructor */
+        this.debug(`commands Constructor name: ${Constructor.name}`);
 
         /** Instanciate of command */
         const command = new Constructor(this, parsed);
@@ -227,18 +246,22 @@ export default class Connection {
 
         this.logger.info(`Command: ${command.directive} with args: ${(command.directive === "PASS") ? "********" : command.data.args}`);
         
-        /*** Clear check health interval to prevent conflict with command */
-        clearInterval(this.#checkHealthInt)
-        
         /** Run function handler */
         await command.handler();
+
+        /** Debug command handler */
+        this.debug(`commands handler is to finish without error.`);
       } catch (e) {
+        /** Debug command errors */
+        this.debug(`commands error catch.`, e);
+        if (e instanceof Deno.errors.BadResource) continue;
         this.logger.error(e);
         await this.serve.webhookError(e);
         await this.reply(e.code || 550, e.message);
       }
     }
     try {
+      this.serve.debug(`Close connection after data iterator, id: ${this.conn.rid}`);
       await this.close();
     } catch (_) { /** It's closed */ }
   }

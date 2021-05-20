@@ -1,13 +1,14 @@
-export { deferred, MuxAsyncIterator } from "https://deno.land/std@0.96.0/async/mod.ts";
-export type { Deferred } from "https://deno.land/std@0.96.0/async/mod.ts";
-export { DenoStdInternalError } from "https://deno.land/std@0.96.0/_util/assert.ts";
-export { BufWriter, BufReader } from "https://deno.land/std@0.96.0/io/bufio.ts";
-export { assert } from "https://deno.land/std@0.96.0/_util/assert.ts";
-export { v4 } from "https://deno.land/std@0.96.0/uuid/mod.ts";
-export * as DPath from "https://deno.land/std@0.96.0/path/mod.ts";
-export { exists } from "https://deno.land/std@0.96.0/fs/mod.ts";
-export { writableStreamFromWriter, readableStreamFromReader } from "https://deno.land/std@0.96.0/io/streams.ts";
-export { format } from "https://deno.land/std@0.96.0/datetime/mod.ts";
+export { deferred, MuxAsyncIterator } from "https://deno.land/std@0.97.0/async/mod.ts";
+export type { Deferred } from "https://deno.land/std@0.97.0/async/mod.ts";
+export { DenoStdInternalError } from "https://deno.land/std@0.97.0/_util/assert.ts";
+export { BufWriter, BufReader } from "https://deno.land/std@0.97.0/io/bufio.ts";
+export type { ReadLineResult } from "https://deno.land/std@0.97.0/io/bufio.ts";
+export { assert } from "https://deno.land/std@0.97.0/_util/assert.ts";
+export { v4 } from "https://deno.land/std@0.97.0/uuid/mod.ts";
+export * as DPath from "https://deno.land/std@0.97.0/path/mod.ts";
+export { exists } from "https://deno.land/std@0.97.0/fs/mod.ts";
+export { writableStreamFromWriter, readableStreamFromReader } from "https://deno.land/std@0.97.0/io/streams.ts";
+export { format } from "https://deno.land/std@0.97.0/datetime/mod.ts";
 
 export { getPort, makeRange, randomPort } from "https://deno.land/x/getport@2.1.0/mod.ts";
 

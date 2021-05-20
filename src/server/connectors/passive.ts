@@ -67,7 +67,12 @@ export default class PassiveConnection {
       
       if (this.listener === undefined) {
         this.port = randomPort(makeRange(1024, 65535));
-        this.listener = Deno.listen({ port: this.port, hostname: this.hostname });
+        if (this.connection.serve.secure) {
+          const addr = this.connection.serve.addr;
+          addr.port = this.port;
+          addr.hostname = this.hostname;
+          this.listener = Deno.listenTls((addr as Deno.ListenTlsOptions));
+        } else this.listener = Deno.listen({ port: this.port, hostname: this.hostname });
       }
       
       return (this.listener.addr as Deno.NetAddr);
