@@ -22,7 +22,7 @@ export default class Eprt {
 
   async handler(): Promise<void> {
     try {
-      if (!this.data.args) return await this.conn.reply(504, 'Arguments require');
+      if (!this.data.args) return await this.conn.reply(501, 'Arguments require');
       const [, /*protocol*/, ip, port] = this.data.args.split('|').values();
       //const family = FAMILY[protocol];
       //if (!family) return await this.conn.reply(504, 'Unknown network protocol');

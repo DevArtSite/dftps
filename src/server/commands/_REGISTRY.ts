@@ -35,6 +35,7 @@ import Rnfr from "./RNFR.ts";
 import Rnto from "./RNTO.ts";
 import Stat from "./STAT.ts";
 import Stru from "./STRU.ts";
+import Clnt from "./CLNT.ts";
 
 export type CommandFlags = {
   obsolete?: boolean;
@@ -85,7 +86,8 @@ export type Commands =
   Rnfr |
   Rnto |
   Stat |
-  Stru
+  Stru |
+  Clnt
 ;
 
 export type CommandConstructor = {
@@ -132,7 +134,8 @@ export const REGISTRY: Array<CommandConstructor> = [
   Rnfr,
   Rnto,
   Stat,
-  Stru
+  Stru,
+  Clnt
 ];
 
 export function findCommand(_directive: string | string[]) {

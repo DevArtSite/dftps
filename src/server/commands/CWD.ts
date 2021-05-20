@@ -20,7 +20,7 @@ export default class Cwd {
       if (!this.conn.fs) return await this.conn.reply(550, 'File system not instantiated');
       if (!this.conn.fs.chdir) return await this.conn.reply(402, 'Not supported by file system');
     
-      if (!this.data.args) return await this.conn.reply(550, 'arg is necessary');
+      if (!this.data.args) return await this.conn.reply(501, 'arg is necessary');
       const cwd = await this.conn.fs.chdir(this.data.args);
       return await this.conn.reply(250, `"${cwd.replace(/"/g, '""')}"`);
     } catch (e) {

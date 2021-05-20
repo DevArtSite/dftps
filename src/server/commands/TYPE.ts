@@ -23,7 +23,7 @@ export default class Type {
     } else if (/^L[0-9]?$/i.test(this.data.args) || /^I$/i.test(this.data.args)) {
       this.conn.transferType = 'binary';
     } else {
-      return await this.conn.reply(501);
+      return await this.conn.reply(504);
     }
     return await this.conn.reply(200, `Switch to "${this.conn.transferType}" transfer mode.`);
   }

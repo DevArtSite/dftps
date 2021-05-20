@@ -20,7 +20,7 @@ export default class Pass {
     try {
       if (!this.conn.username) return await this.conn.reply(503);
       if (this.conn.authenticated) return await this.conn.reply(202);
-      if (!this.data.args) return await this.conn.close(504, 'Must provide password');
+      if (!this.data.args) return await this.conn.close(501, 'Must provide password');
       await this.conn.login(this.data.args);
       return await this.conn.reply(230);
     } catch (e) {

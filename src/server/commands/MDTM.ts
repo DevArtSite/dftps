@@ -20,7 +20,7 @@ export default class Mdtm {
     try {
       if (!this.conn.fs) return await this.conn.reply(550, 'File system not instantiated');
       if (!this.conn.fs.get) return await this.conn.reply(402, 'Not supported by file system');
-      if (!this.data.args) return await this.conn.reply(550, 'Not arguments found');
+      if (!this.data.args) return await this.conn.reply(501, 'Not arguments found');
       const fileStat = await this.conn.fs.get(this.data.args);
       if (!fileStat.mtime) return await this.conn.reply(550);
       const modified = format(new Date(fileStat.mtime), "YYYYMMDDHHmmss.SSS");

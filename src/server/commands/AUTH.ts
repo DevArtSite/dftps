@@ -7,7 +7,7 @@ export default class Auth {
   static description = 'Set authentication mechanism';
   static flags = {
     noAuth: true,
-    feat: 'AUTH TLS'
+    feat: 'AUTH TLS SSL'
   };
 
 
