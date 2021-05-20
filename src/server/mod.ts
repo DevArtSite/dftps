@@ -3,7 +3,7 @@ import Logger from "../_utils/logger.ts";
 import Connection from "./connection.ts";
 
 /** Options for creating an FTP listener server. */
-export type FTPOptions = Omit<Deno.ListenOptions, "transport">;
+export type ListenOptions = Omit<Deno.ListenOptions | Deno.ListenTlsOptions, "transport">;
 
 /** General options of ftp server */
 export type FTPServerOptions = {
@@ -32,14 +32,14 @@ class Server implements AsyncIterable<Connection> {
   #connections: Connection[] = [];
 
   /** TCP listener options */
-  addr: Deno.ListenOptions | Deno.ListenTlsOptions;
+  addr: ListenOptions;
   options: FTPServerOptions & { pasvUrl: string };
   /** TCP listener */
   listener: Deno.Listener;
   secure = false;
 
   logger: Logger;
-  constructor(addr: Deno.ListenOptions | Deno.ListenTlsOptions, _options?: FTPServerOptions) {
+  constructor(addr: ListenOptions, _options?: FTPServerOptions) {
     this.logger = Logger.create({ prefix: "[Server] =>" });
 
     /** Listener options initializer assigned to default listener options */
@@ -54,7 +54,7 @@ class Server implements AsyncIterable<Connection> {
     }, _options);
 
     /** Debug listener options */
-    this.debug("Listener options: ", (this.addr as Deno.ListenTlsOptions));
+    this.debug("Listener options: ", this.addr);
 
     if (!(this.addr as Deno.ListenTlsOptions).certFile) {
       /** Start listener without tls */

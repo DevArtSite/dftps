@@ -7,6 +7,9 @@ DFtpS is an FTP server based on [ftp-srv](https://github.com/autovance/ftp-srv) 
 
 - [Install](#install)
 - [Make your own](#make-your-own)
+  - [Simple](#simple)
+  - [With database](#with-database)
+- [Log example](#log-example)
 - [Deno Dependencies](#deno-dependencies)
 - [List of FTP commands](#list-of-ftp-commands)
 - [Contributing](#contributing)
@@ -32,32 +35,24 @@ curl -fsSL https://deno.land/x/dftps/install.sh | sh -s v1.0.0
 
 ### Simple
 
+- First, we import the Server class and type for user authentication.
+
 ```ts
 import { Server } from "https://deno.land/x/dftps/server/mod.ts";
 import type { UsernameResolvable, LoginResolvable } from "https://deno.land/x/dftps/server/connection.ts";
+```
 
-const serve = new Server({
-  port: 21,
-  hostname: "127.0.0.1" // (optional)
-}, {
-  /** Debug mode */
-  debug: boolean;
-  /** Url for passive connection. */
-  pasvUrl?: string; // (optional)
-  /** Minimum port for passive connection. */
-  pasvMin?: number; // (optional)
-  /** Maximum port for passive connection. */
-  pasvMax?: number; // (optional)
-  /** Handle anonymous connexion. */
-  anonymous?: boolean; // (optional)
-  /** Sets the format to use for file stat queries such as "LIST". */
-  fileFormat?: string; // (optional)
-  /** Array of commands that are not allowed */
-  blacklist?: string[];
-  /** Url of webhook like Discord webhook */
-  webhook?: string;
-});
+- Then we just need to create an instance of Server with these options described below.
+  - [Listener Options](https://doc.deno.land/https/deno.land%2Fx%2Fdftps%2Fsrc%2Fserver%2Fmod.ts#FTPOptions)
+  - [FTPServer Options](https://doc.deno.land/https/deno.land%2Fx%2Fdftps%2Fsrc%2Fserver%2Fmod.ts#FTPServerOptions)
 
+```ts
+const serve = new Server({ port: 21, hostname: "127.0.0.1" });
+```
+
+- All we have to do is wait for a new connection and check the veracity of it using the authentication tools (awaitUsername, awaitLogin).
+
+```ts
 for await (const connection of serve) {
   const { awaitUsername, awaitLogin } = connection;
   /** waiting to receiving username from connection */
@@ -66,7 +61,7 @@ for await (const connection of serve) {
     resolveUsername.resolve();
   });
   /** waiting to receiving password from connection and finalize the user authenticate */
-  awaitLogin.then(async ({ password, resolvePassword }: LoginResolvable) => {
+  awaitLogin.then(({ password, resolvePassword }: LoginResolvable) => {
     if (password !== "my-password") return resolvePassword.reject("Wrong password!");
     resolvePassword.resolve({ root: "my-folder", uid: 1000, gid: 1000 });
   });
@@ -75,75 +70,54 @@ for await (const connection of serve) {
 
 ### With database
 
+- To begin we will initially import the "createDb" function which will allow us to create a database and the "Users" model in addition to the imports mentioned above.
+
+  ```ts
+  import { verify, Model } from "https://deno.land/x/dftps/deps.ts";
+  import createDb from "https://deno.land/x/dftps/src/db/mod.ts";
+  import Users from "https://deno.land/x/dftps/src/db/Users.ts";
+  ```
+
+- Only the following database types are supported: "MariaDB" | "MongoDB" | "MySQL" | "PostgreSQL" | "SQLite"
+  - Maria, MySQL, PostgreSQL Options
+    - database [string] (Required)
+    - host [string] (Required)
+    - username [string] (Required)
+    - password [string] (Required)
+    - port [number] (Optional)
+  - MongoDB Options
+    - uri [string] (Required)
+    - database [string] (Required)
+  - SQLite Options
+    - filepath [string] (Required)
+
 ```ts
-import { Server } from "https://deno.land/x/dftps/server/mod.ts";
-import type { UsernameResolvable, LoginResolvable } from "https://deno.land/x/dftps/server/connection.ts";
-
-import createDb from "../db/mod.ts";
-import Users from "../db/Users.ts";
-
+/** Example with MongoDB */
 await createDb({
-  connector: "MariaDB" | "MongoDB" | "MySQL" | "PostgreSQL" | "SQLite",
-
-  /* Maria, MySQL, PostgreSQL Example
-  database: 'my-database',
-  host: 'url-to-db.com',
-  username: 'username',
-  password: 'password',
-  port: 3306 // (optional)
-  */
-
-  /* MongoDB Example
+  connector: "MongoDB",
   uri: 'mongodb://127.0.0.1:27017',
   database: 'test'
-  */
-
-  /* SQLite Example
-  filepath: './database.sqlite'
-  */
 });
 
-const serve = new Server({
-  port: 21,
-  hostname: "127.0.0.1" // (optional)
-}, {
-  /** Debug mode */
-  debug: boolean;
-  /** Url for passive connection. */
-  pasvUrl: string, // (optional)
-  /** Minimum port for passive connection. */
-  pasvMin: number, // (optional)
-  /** Maximum port for passive connection. */
-  pasvMax: number, // (optional)
-  /** Handle anonymous connexion. */
-  anonymous: boolean, // (optional)
-  /** Sets the format to use for file stat queries such as "LIST". */
-  fileFormat: string, // (optional)
-  /** Array of commands that are not allowed */
-  blacklist: string[] // (optional)
-  /** Url of webhook like Discord webhook */
-  webhook?: string;
-});
+const serve = new Server(ListenOptions, FTPServerOptions);
 
 for await (const connection of serve) {
   const { awaitUsername, awaitLogin } = connection;
-  /** Get all users in database */
-  const users = await Users.select("username", "password", "root", "uid", "gid").all();
   let user: Model;
   /** Waiting to receiving username from connection */
   awaitUsername.then(({ username, resolveUsername }: UsernameResolvable) => {
-      const found = users.find(u => u.username === username);
-      if (!found) return resolveUsername.reject("Incorrect username!");
-      user = found;
-      resolveUsername.resolve();
+    /** Find user in database */
+    const found = await Users.where('username', username).get();
+    if ((found instanceof Array && found.length === 0) || !found) return resolveUsername.reject("Incorrect username!");
+    user = (found instanceof Array) ? found[0] : found;
+    resolveUsername.resolve();
   });
   /** Waiting to receiving password from connection and finalize the user authenticate */
   awaitLogin.then(async ({ password, resolvePassword }: LoginResolvable) => {
-      if (!user) return resolvePassword.reject("User not found!");
-      if (! await verify(password, (user.password as string))) return resolvePassword.reject("Wrong password!");
-
-      const { root, uid, gid } = user;
-      resolvePassword.resolve({ root: (root as string), uid: (uid as number), gid: (gid as number) });
+    if (!user) return resolvePassword.reject("User not found!");
+    if (! await verify(password, (user.password as string))) return resolvePassword.reject("Wrong password!");
+    const { root, uid, gid } = user;
+    resolvePassword.resolve({ root: (root as string), uid: (uid as number), gid: (gid as number) });
   });
 }
 ```

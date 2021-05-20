@@ -24,18 +24,16 @@ const serveCommands = new Command()
     const serve = new Server(config.addr, config.options);
     for await (const connection of serve) {
       const { awaitUsername, awaitLogin } = connection;
-      const users = await Users.select("username", "password", "root", "uid", "gid").all();
       let user: Model;
-      awaitUsername.then(({ username, resolveUsername }: UsernameResolvable) => {
-        const found = users.find(u => u.username === username);
-        if (!found) return resolveUsername.reject("Incorrect username!");
-        user = found;
+      awaitUsername.then(async ({ username, resolveUsername }: UsernameResolvable) => {
+        const found = await Users.where('username', username).get();
+        if ((found instanceof Array && found.length === 0) || !found) return resolveUsername.reject("Incorrect username!");
+        user = (found instanceof Array) ? found[0] : found;
         resolveUsername.resolve();
       });
       awaitLogin.then(async ({ password, resolvePassword }: LoginResolvable) => {
         if (!user) return resolvePassword.reject("User not found!");
         if (! await verify(password, (user.password as string))) return resolvePassword.reject("Wrong password!");
-        
         const { root, uid, gid } = user;
         resolvePassword.resolve({ root: (root as string), uid: (uid as number), gid: (gid as number) });
       });

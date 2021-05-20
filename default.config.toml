@@ -28,11 +28,12 @@
   #host = "host"
   #username = "username"
   #password = "password"
-  #port = port                  # optional
+  #port = port
 
   # MongoDB Example
-  #uri = "mongodb-url"          # "mongodb://127.0.0.1:27017"
-  #database = "database-name
+  #"mongodb://127.0.0.1:27017"
+  #uri = "mongodb-url"
+  #database = "database-name"
 
   # SQLite Example
   #filepath = "sqlite file path"
