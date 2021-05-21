@@ -24,12 +24,15 @@ export default class Stor {
       if (!this.conn.connector) return await this.conn.reply(402, 'Not passive found');
       if (!this.conn.connector.conn) await this.conn.connector.accept();
       if (!this.conn.connector.conn) return await this.conn.reply(402, 'Not passive connection found');
-      const append = this.data.directive === 'APPE';
+      let append = this.data.directive === 'APPE';
       const filePath = this.data.args;
 
       await this.conn.reply(150);
       const readbleStream = readableStreamFromReader(this.conn.connector.conn).getIterator();
-      for await (const chunk of readbleStream) await this.conn.fs.write(filePath, chunk, { append });
+      for await (const chunk of readbleStream) {
+        await this.conn.fs.write(filePath, chunk, { append });
+        append = true;
+      }
       await this.conn.reply(226, filePath);
       return this.conn.connector.close();
     } catch (e) {
