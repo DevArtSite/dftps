@@ -7,7 +7,7 @@ fi
 
 archive="dftps.zip"
 
-sudo ~/.deno/bin/deno compile -A --unstable ../dftps.ts
+sudo ~/.deno/bin/deno compile -A --unstable ./dftps.ts
 
 if [ -f "$archive" ]; then
   rm "$archive"
