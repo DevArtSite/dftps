@@ -53,6 +53,8 @@ export type LoginData = {
 	blacklist?: string[];
 }
 
+const HIDDEN_TO_SECURE = "HIDDEN_TO_SECURE";
+
 export default class Connection {
   #closed = false;
 
@@ -157,6 +159,7 @@ export default class Connection {
   
   /** reply to connection */
   async reply(_options: replyOptions | number, letters?: replyLetters | replyLetters[]): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     let options: replyOptions = {};
     if (typeof _options === 'number') options = { code: _options }; // allow passing in code as first param
     else options = _options;
@@ -226,7 +229,16 @@ export default class Connection {
         if (!parsed.directive) return;
 
         /** Debug parsed */
-        this.debug(`commands line parsed: ${parsed}`);
+        if(parsed.directive === "PASS") {
+          const pass = parsed.args;
+          const raw = parsed.raw;
+          parsed.args = HIDDEN_TO_SECURE;
+          parsed.raw = HIDDEN_TO_SECURE;
+          this.debug(`commands line parsed: `, parsed);
+          parsed.args = pass;
+          parsed.raw = raw;
+
+        } else this.debug(`commands line parsed: `, parsed);
 
         /** Reject blacklisted */
         if (this.options.blacklist && this.options.blacklist.indexOf(parsed.directive) !== -1) {
@@ -244,7 +256,7 @@ export default class Connection {
         const command = new Constructor(this, parsed);
         if (!command) return await this.reply(502, "Command not implemented");
 
-        this.logger.info(`Command: ${command.directive} with args: ${(command.directive === "PASS") ? "********" : command.data.args}`);
+        this.logger.info(`Command: ${command.directive} with args: ${(command.directive === "PASS") ? HIDDEN_TO_SECURE : command.data.args}`);
         
         /** Run function handler */
         await command.handler();

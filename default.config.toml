@@ -4,6 +4,7 @@
 # hostname = "127.0.0.1"
 
 [options]
+  # debug = true
   # Url for passive connection.
   pasvUrl = "127.0.0.1"
   # Minimum port for passive connection.
