@@ -159,7 +159,6 @@ export default class Connection {
   
   /** reply to connection */
   async reply(_options: replyOptions | number, letters?: replyLetters | replyLetters[]): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
     let options: replyOptions = {};
     if (typeof _options === 'number') options = { code: _options }; // allow passing in code as first param
     else options = _options;
