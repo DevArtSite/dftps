@@ -3,7 +3,7 @@ if (!res) throw new Error("coucou");
 const commits = await res.json();
 
 const newCommits = [];
-const lastCommitID = "d4803bd";
+const lastCommitID = "bf1060c";
 for (const commit of commits) {
   if (commit.sha.search(lastCommitID) !== -1) {
     console.log("ici")
