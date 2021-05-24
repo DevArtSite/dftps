@@ -5,6 +5,8 @@
   
 DFtpS is an FTP server based on [ftp-srv](https://github.com/autovance/ftp-srv) with Deno.
 
+Check our guide in [https://devartsite.github.io/dftps-guide/guide/](https://devartsite.github.io/dftps-guide/)
+
 - [Install](#install)
 - [Make your own](#make-your-own)
   - [Simple](#simple)
