@@ -1,0 +1,4 @@
+*.md
+*.sh
+test/*
+assets/*
